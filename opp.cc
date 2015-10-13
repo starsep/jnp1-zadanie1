@@ -3,11 +3,21 @@
 #include <vector>
 #include <map>
 #include <version.hpp>
+#include "http_client.hpp"
+
+std::string getXml() {
+    HttpClient *client;
+    try {
+        boost::asio::io_service io_service;
+        client = new HttpClient(io_service, "www.currency-iso.org", "/dam/downloads/lists/list_one.xml");
+        io_service.run();
+    }
+    catch (std::exception &e) {
+        std::cout << "Exception: " << e.what() << "\n";
+    }
+    return client->getResponse();
+}
 
 int main() {
-    std::cout << "Using Boost "
-    << BOOST_VERSION / 100000 << "."  // major version
-    << BOOST_VERSION / 100 % 1000 << "."  // minor version
-    << BOOST_VERSION % 100                // patch level
-    << std::endl;
+    std::cout << getXml();
 }
