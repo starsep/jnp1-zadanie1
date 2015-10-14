@@ -67,4 +67,20 @@ int main() {
     check("X 1,001 PHP", isValidPhase2);
     check("Y 1,003 PHP", isValidPhase2);
     check("1 PLN", isValidPhase2);
+
+    std::cout << "\n===Third Phase Header:===\n\n";
+    check("5 5", isValidPhase3Header);
+    check("0 10", isValidPhase3Header);
+    check("0,001 0,002", isValidPhase3Header);
+    check("1,502 1,502", isValidPhase3Header);
+    check("1,504 1,504", isValidPhase3Header);
+    check("7 6", isValidPhase3Header);
+
+    std::cout << "\n===Third Phase:===\n\n";
+    check("5 5", isValidPhase3);
+    check("0 10", isValidPhase3);
+    check("0,001 0,002", isValidPhase3);
+    check("1,502 1,502", isValidPhase3);
+    check("1,504 1,504", isValidPhase3);
+    check("7 6", isValidPhase3);
 }
