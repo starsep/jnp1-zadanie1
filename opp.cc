@@ -5,7 +5,6 @@
 #include <vector>
 #include <map>
 
-
 int currentLineNumber;
 std::map<std::string, long double> currencies; //dla kodu waluty przelicznik
 
