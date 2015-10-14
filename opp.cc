@@ -47,23 +47,20 @@ bool checkPhase1(const std::string &line) {
 
 bool checkPhase2(const std::string &line) {
     boost::regex pattern(R"(\s*.*\s\d+(,\d{1,3})?\s\u{3}\s*)");
-    return boost::regex_match(line, pattern);
-}
-
-bool checkPhase3Header(const std::string &line) {
-    boost::regex pattern(R"(\s*\d+\s\d+\s*)");
-    return boost::regex_match(line, pattern);
+    bool matched = boost::regex_match(line, pattern);
+    return matched;
 }
 
 bool checkPhase3(const std::string &line) {
     boost::regex pattern(R"(\s*\d+(,\d{1,3})?\s\d+(,\d{1,3})?\s*)");
-    return boost::regex_match(line, pattern);
+    bool matched = boost::regex_match(line, pattern);
+    return matched;
 }
 
 
 void solve() {
-    std::array<std::function<bool(const std::string &)>, 4> phases
-            {{checkPhase1, checkPhase2, checkPhase3Header, checkPhase3}};
+    std::array<std::function<bool(const std::string &)>,3> phases
+            {{checkPhase1, checkPhase2, checkPhase3}};
     std::string line;
     size_t currentPhase = 0;
     for (currentLineNumber = 1; std::getline(std::cin, line); currentLineNumber++) {
@@ -77,6 +74,7 @@ void solve() {
         if (!success) {
             reportError(line);
         }
+        std::cerr << line << "++++++++++" << currentPhase << '\n';
     }
 }
 
@@ -123,14 +121,6 @@ void tests() {
     check("X 1,001 PHP", checkPhase2);
     check("Y 1,003 PHP", checkPhase2);
     check("1 PLN", checkPhase2);
-
-    std::cout << "\n===Third Phase Header:===\n\n";
-    check("5 5", checkPhase3Header);
-    check("0 10", checkPhase3Header);
-    check("0,001 0,002", checkPhase3Header);
-    check("1,502 1,502", checkPhase3Header);
-    check("1,504 1,504", checkPhase3Header);
-    check("7 6", checkPhase3Header);
 
     std::cout << "\n===Third Phase:===\n\n";
     check("5 5", checkPhase3);
