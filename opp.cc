@@ -133,4 +133,5 @@ void tests() {
 
 int main() {
     solve();
+    std::cout << R"(lel\n)";
 }
