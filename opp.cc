@@ -4,14 +4,26 @@
 #include <algorithm>
 #include <vector>
 #include <map>
+#include <tuple>
+#include <iomanip>
 
+typedef std::tuple<std::string, long double, std::string, int> contribution;
+typedef std::vector<contribution>::iterator conIterator;
+
+bool isSorted = false;
+bool error = false;
 int currentLineNumber;
 std::map<std::string, long double> currencies; //dla kodu waluty przelicznik
+std::vector<contribution> contributions;
 
 void reportError(const std::string &line) {
-    std::cerr << "Error in line " << currentLineNumber << ':' << line << '\n';
+	if(!error) {
+		std::cerr << "Error in line " << currentLineNumber << ':' << line << '\n';
+		error = true;
+	}
 }
 
+//TODO: zera wiodące
 //tworzy liczbę z części sprzed przecinka i po
 //np. makeNumber("3", "14") == 3.14
 //    makeNumber("42", "") == 42.0
@@ -24,6 +36,18 @@ long double makeNumber(const std::string &a, const std::string &b) {
     return std::stold(sstream.str());
 }
 
+//TODO: dokładność 0.001
+bool comparator(const contribution &first, const contribution &second) {
+	long double firstAmount = std::get<1>(first) * currencies[std::get<2>(first)];
+	long double secondAmount = std::get<1>(second) * currencies[std::get<2>(second)];
+	
+	if (firstAmount != secondAmount) {
+		return firstAmount < secondAmount;
+	}
+	
+	return std::get<3>(first) < std::get<3>(second); // sortowanie po numerze z wejścia
+}
+
 bool checkPhase1(const std::string &line) {
     boost::regex pattern(R"(\s*(\u{3})\s((\d+)(,(\d{1,3}))?)\s*)");
     bool matched = boost::regex_match(line, pattern);
@@ -32,7 +56,7 @@ bool checkPhase1(const std::string &line) {
         boost::regex_search(line, result, pattern);
         std::string currencyCode = result[1];
         long double currencyValue = makeNumber(result[3], result[5]);
-        std::cerr << currencyCode << " = " << currencyValue << '\n';
+        //std::cerr << currencyCode << " = " << currencyValue << '\n';
         if (currencyValue <= 0.0 || currencies.find(currencyCode) != currencies.end()) {
             reportError(line);
         }
@@ -45,25 +69,88 @@ bool checkPhase1(const std::string &line) {
 }
 
 bool checkPhase2(const std::string &line) {
-    boost::regex pattern(R"(\s*.*\s\d+(,\d{1,3})?\s\u{3}\s*)");
+    boost::regex pattern(R"(\s*(.*)\s((\d+)(,(\d{1,3}))?)\s(\u{3})\s*)");
     bool matched = boost::regex_match(line, pattern);
+    if (matched) {
+		boost::smatch result;
+        boost::regex_search(line, result, pattern);
+        std::string name = result[1];
+        long double amount = makeNumber(result[3], result[5]);
+        std::string currencyCode = result[6];
+        //std::cerr << "PHASE2 " << name << ' ' << amount << ' ' << currencyCode << '\n';
+        if (amount <= 0.0 || currencies.find(currencyCode) == currencies.end()) {
+			reportError(line);
+			return false;
+		}
+        contribution con = std::make_tuple(name, amount, currencyCode, currentLineNumber);
+        contributions.push_back(con);
+	}
     return matched;
 }
+
+void printAll() {
+	std::cout << "--- Print all --- \n";
+	for(auto x : contributions) {
+		std::cout << std::get<0>(x) << " " << std::get<1>(x) << " " << std::get<2>(x) << " " << std::get<3>(x) << "\n";
+	}
+}
+
+bool query(long double begin, long double end) {
+	if (begin > end) {
+		return false;
+	}
+	
+	printAll();
+	
+	contribution lowerBound = std::make_tuple("", begin, "", 0);
+	contribution upperBound = std::make_tuple("", end, "", currentLineNumber + 1);
+	
+	conIterator lower = std::lower_bound(contributions.begin(), contributions.end(), lowerBound, comparator);
+	conIterator upper = std::upper_bound(contributions.begin(), contributions.end(), upperBound, comparator);
+	
+	for (conIterator it = lower; it != upper; it++) {
+		std::cout << std::fixed << std::setprecision(3);
+		std::cout << "\"" << std::get<0>(*it) << "\"";
+		std::cout << ",\"" << std::get<1>(*it) << "\"";
+		std::cout << "," << std::get<2>(*it) << "\n";
+	}
+	
+	std::cout << "--- Print all end ---" << "\n";
+	
+	return true;
+}	
 
 bool checkPhase3(const std::string &line) {
-    boost::regex pattern(R"(\s*\d+(,\d{1,3})?\s\d+(,\d{1,3})?\s*)");
+    boost::regex pattern(R"(\s*(\d+)(,(\d{1,3}))?\s(\d+)(,(\d{1,3}))?\s*)");
     bool matched = boost::regex_match(line, pattern);
+    if(matched) {
+		if(!isSorted) {
+			std::sort(contributions.begin(), contributions.end(), comparator);
+			isSorted = true;
+		}
+		
+		boost::smatch result;
+        boost::regex_search(line, result, pattern);
+		long double begin = makeNumber(result[1], result[3]);
+		long double end = makeNumber(result[4], result[6]);
+		if(!query(begin, end)) {
+			reportError(line);
+			return false;
+		}
+		//std::cerr << "BEGIN------------------------------ " << begin << ' ' << end << '\n';
+	}
     return matched;
 }
 
-
 void solve() {
-    std::array<std::function<bool(const std::string &)>,3> phases
+	currencies[""] = 1.0; // pusty string to uniwersalna waluta
+    std::array<std::function<bool(const std::string &)>, 3> phases
             {{checkPhase1, checkPhase2, checkPhase3}};
     std::string line;
     size_t currentPhase = 0;
     for (currentLineNumber = 1; std::getline(std::cin, line); currentLineNumber++) {
         bool success = false;
+        error = false;
         for (size_t i = currentPhase; i < phases.size() && !success; i++) {
             if (phases[i](line)) {
                 currentPhase = i;
@@ -73,7 +160,7 @@ void solve() {
         if (!success) {
             reportError(line);
         }
-        std::cerr << line << "++++++++++" << currentPhase << '\n';
+        //std::cerr << line << "++++++++++" << currentPhase << '\n';
     }
 }
 
