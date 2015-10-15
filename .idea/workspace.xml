@@ -15,9 +15,7 @@
     </ADDITIONAL_GENERATION_ENVIRONMENT>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="965acfa6-7eb5-43e7-b757-378b25c79352" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/opp.cc" afterPath="$PROJECT_DIR$/opp.cc" />
-    </list>
+    <list default="true" id="965acfa6-7eb5-43e7-b757-378b25c79352" name="Default" comment="" />
     <ignored path="fc359081+bl359563.iws" />
     <ignored path=".idea/workspace.xml" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -174,7 +172,7 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="-1" y="35" width="1922" height="1022" extended-state="7" />
+    <frame x="-1" y="35" width="1922" height="1022" extended-state="6" />
     <editor active="true" />
     <layout>
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.16798314" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
