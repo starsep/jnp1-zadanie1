@@ -6,6 +6,7 @@
 #include <map>
 #include <tuple>
 #include <iomanip>
+#include <exception>
 
 typedef std::tuple<std::string, long double, std::string, int> contribution;
 typedef std::vector<contribution>::iterator conIterator;
@@ -14,38 +15,42 @@ bool isSorted = false;
 bool error = false;
 int currentLineNumber;
 std::map<std::string, long double> currencies; //dla kodu waluty przelicznik
-std::vector<contribution> contributions;
+std::vector <contribution> contributions;
 
 void reportError(const std::string &line) {
-	if(!error) {
-		std::cerr << "Error in line " << currentLineNumber << ':' << line << '\n';
-		error = true;
-	}
+    if (!error) {
+        std::cerr << "Error in line " << currentLineNumber << ':' << line << '\n';
+        error = true;
+    }
 }
 
-//TODO: zera wiodące
+//ZAŁOŻENIE: zera wiodące to błąd
 //tworzy liczbę z części sprzed przecinka i po
 //np. makeNumber("3", "14") == 3.14
 //    makeNumber("42", "") == 42.0
-long double makeNumber(const std::string &a, const std::string &b) {
+bool makeNumber(const std::string &a, const std::string &b, long double &result) {
     std::stringstream sstream;
     sstream << a;
+    if (a[0] == '0' && a.size() > 1) {
+        return false;
+    }
     if (b.size() > 0) {
         sstream << '.' << b;
     }
-    return std::stold(sstream.str());
+    result = std::stold(sstream.str());
+    return true;
 }
 
 //TODO: dokładność 0.001
 bool comparator(const contribution &first, const contribution &second) {
-	long double firstAmount = std::get<1>(first) * currencies[std::get<2>(first)];
-	long double secondAmount = std::get<1>(second) * currencies[std::get<2>(second)];
-	
-	if (firstAmount != secondAmount) {
-		return firstAmount < secondAmount;
-	}
-	
-	return std::get<3>(first) < std::get<3>(second); // sortowanie po numerze z wejścia
+    long double firstAmount = std::get<1>(first) * currencies[std::get<2>(first)];
+    long double secondAmount = std::get<1>(second) * currencies[std::get<2>(second)];
+
+    if (firstAmount != secondAmount) {
+        return firstAmount < secondAmount;
+    }
+
+    return std::get<3>(first) < std::get<3>(second); // sortowanie po numerze z wejścia
 }
 
 bool checkPhase1(const std::string &line) {
@@ -55,12 +60,16 @@ bool checkPhase1(const std::string &line) {
         boost::smatch result;
         boost::regex_search(line, result, pattern);
         std::string currencyCode = result[1];
-        long double currencyValue = makeNumber(result[3], result[5]);
+        long double currencyValue;
+        if (!makeNumber(result[3], result[5], currencyValue)) {
+            reportError(line);
+            return false;
+        }
         //std::cerr << currencyCode << " = " << currencyValue << '\n';
         if (currencyValue <= 0.0 || currencies.find(currencyCode) != currencies.end()) {
             reportError(line);
         }
-        else {
+        else if (!error) {
             currencies[currencyCode] = currencyValue;
         }
     }
@@ -72,79 +81,86 @@ bool checkPhase2(const std::string &line) {
     boost::regex pattern(R"(\s*(.*)\s((\d+)(,(\d{1,3}))?)\s(\u{3})\s*)");
     bool matched = boost::regex_match(line, pattern);
     if (matched) {
-		boost::smatch result;
+        boost::smatch result;
         boost::regex_search(line, result, pattern);
         std::string name = result[1];
-        long double amount = makeNumber(result[3], result[5]);
+        long double amount;
+        if (!makeNumber(result[3], result[5], amount)) {
+            reportError(line);
+            return false;
+        }
         std::string currencyCode = result[6];
         //std::cerr << "PHASE2 " << name << ' ' << amount << ' ' << currencyCode << '\n';
         if (amount <= 0.0 || currencies.find(currencyCode) == currencies.end()) {
-			reportError(line);
-			return false;
-		}
+            reportError(line);
+            return false;
+        }
         contribution con = std::make_tuple(name, amount, currencyCode, currentLineNumber);
         contributions.push_back(con);
-	}
+    }
     return matched;
 }
 
 void printAll() {
-	std::cout << "--- Print all --- \n";
-	for(auto x : contributions) {
-		std::cout << std::get<0>(x) << " " << std::get<1>(x) << " " << std::get<2>(x) << " " << std::get<3>(x) << "\n";
-	}
+    std::cout << "--- Print all --- \n";
+    for (auto x : contributions) {
+        std::cout << std::get<0>(x) << " " << std::get<1>(x) << " " << std::get<2>(x) << " " << std::get<3>(x) << "\n";
+    }
+    std::cout << "--- Print all end ---" << "\n";
 }
 
 bool query(long double begin, long double end) {
-	if (begin > end) {
-		return false;
-	}
-	
-	printAll();
-	
-	contribution lowerBound = std::make_tuple("", begin, "", 0);
-	contribution upperBound = std::make_tuple("", end, "", currentLineNumber + 1);
-	
-	conIterator lower = std::lower_bound(contributions.begin(), contributions.end(), lowerBound, comparator);
-	conIterator upper = std::upper_bound(contributions.begin(), contributions.end(), upperBound, comparator);
-	
-	for (conIterator it = lower; it != upper; it++) {
-		std::cout << std::fixed << std::setprecision(3);
-		std::cout << "\"" << std::get<0>(*it) << "\"";
-		std::cout << ",\"" << std::get<1>(*it) << "\"";
-		std::cout << "," << std::get<2>(*it) << "\n";
-	}
-	
-	std::cout << "--- Print all end ---" << "\n";
-	
-	return true;
-}	
+    if (begin > end) {
+        return false;
+    }
+
+    //printAll();
+
+    contribution lowerBound = std::make_tuple("", begin, "", 0);
+    contribution upperBound = std::make_tuple("", end, "", currentLineNumber + 1);
+
+    conIterator lower = std::lower_bound(contributions.begin(), contributions.end(), lowerBound, comparator);
+    conIterator upper = std::upper_bound(contributions.begin(), contributions.end(), upperBound, comparator);
+
+    for (conIterator it = lower; it != upper; it++) {
+        std::cout << std::fixed << std::setprecision(3);
+        std::cout << "\"" << std::get<0>(*it) << "\"";
+        std::cout << ",\"" << std::get<1>(*it) << "\"";
+        std::cout << "," << std::get<2>(*it) << "\n";
+    }
+
+
+    return true;
+}
 
 bool checkPhase3(const std::string &line) {
     boost::regex pattern(R"(\s*(\d+)(,(\d{1,3}))?\s(\d+)(,(\d{1,3}))?\s*)");
     bool matched = boost::regex_match(line, pattern);
-    if(matched) {
-		if(!isSorted) {
-			std::sort(contributions.begin(), contributions.end(), comparator);
-			isSorted = true;
-		}
-		
-		boost::smatch result;
+    if (matched) {
+        if (!isSorted) {
+            std::sort(contributions.begin(), contributions.end(), comparator);
+            isSorted = true;
+        }
+        boost::smatch result;
         boost::regex_search(line, result, pattern);
-		long double begin = makeNumber(result[1], result[3]);
-		long double end = makeNumber(result[4], result[6]);
-		if(!query(begin, end)) {
-			reportError(line);
-			return false;
-		}
-		//std::cerr << "BEGIN------------------------------ " << begin << ' ' << end << '\n';
-	}
+        long double begin, end;
+        if (!makeNumber(result[1], result[3], begin) || !makeNumber(result[4], result[6], end)) {
+            reportError(line);
+            return false;
+        }
+        if (!query(begin, end)) {
+            reportError(line);
+            return false;
+        }
+        //std::cerr << "BEGIN------------------------------ " << begin << ' ' << end << '\n';
+    }
     return matched;
 }
 
 void solve() {
-	currencies[""] = 1.0; // pusty string to uniwersalna waluta
-    std::array<std::function<bool(const std::string &)>, 3> phases
+    currencies[""] = 1.0; // pusty string to uniwersalna waluta
+    std::array < std::function < bool(
+    const std::string &)>, 3 > phases
             {{checkPhase1, checkPhase2, checkPhase3}};
     std::string line;
     size_t currentPhase = 0;
@@ -164,6 +180,7 @@ void solve() {
     }
 }
 
+/*
 void check(const std::string &line, std::function<bool(const std::string &)> foo) {
     if (foo(line)) {
         std::cout << line << " is valid\n";
@@ -216,8 +233,8 @@ void tests() {
     check("1,504 1,504", checkPhase3);
     check("7 6", checkPhase3);
 }
+*/
 
 int main() {
     solve();
-    std::cout << R"(lel\n)";
 }
