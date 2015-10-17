@@ -15,7 +15,9 @@
     </ADDITIONAL_GENERATION_ENVIRONMENT>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="965acfa6-7eb5-43e7-b757-378b25c79352" name="Default" comment="" />
+    <list default="true" id="965acfa6-7eb5-43e7-b757-378b25c79352" name="Default" comment="">
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/opp.cc" afterPath="$PROJECT_DIR$/opp.cc" />
+    </list>
     <ignored path="fc359081+bl359563.iws" />
     <ignored path=".idea/workspace.xml" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -38,8 +40,8 @@
       <file leaf-file-name="opp.cc" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/opp.cc">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0">
-              <caret line="151" column="30" selection-start-line="151" selection-start-column="30" selection-end-line="151" selection-end-column="30" />
+            <state vertical-scroll-proportion="0.22576967">
+              <caret line="162" column="8" selection-start-line="162" selection-start-column="8" selection-end-line="162" selection-end-column="8" />
               <folding />
             </state>
           </provider>
@@ -276,8 +278,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/opp.cc">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="151" column="30" selection-start-line="151" selection-start-column="30" selection-end-line="151" selection-end-column="30" />
+        <state vertical-scroll-proportion="0.22576967">
+          <caret line="162" column="8" selection-start-line="162" selection-start-column="8" selection-end-line="162" selection-end-column="8" />
           <folding />
         </state>
       </provider>

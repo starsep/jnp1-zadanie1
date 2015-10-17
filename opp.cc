@@ -159,9 +159,8 @@ bool checkPhase3(const std::string &line) {
 
 void solve() {
     currencies[""] = 1.0; // pusty string to uniwersalna waluta
-    std::array < std::function < bool(
-    const std::string &)>, 3 > phases
-            {{checkPhase1, checkPhase2, checkPhase3}};
+    std::array<std::function<bool(const std::string &)>, 3> phases
+        {{checkPhase1, checkPhase2, checkPhase3}};
     std::string line;
     size_t currentPhase = 0;
     for (currentLineNumber = 1; std::getline(std::cin, line); currentLineNumber++) {
