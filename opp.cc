@@ -14,7 +14,7 @@ typedef std::vector<contribution>::iterator conIterator;
 
 enum {
 	name = 0,
-	ammount = 1,
+	amount = 1,
 	currency = 2,
 	number = 3
 };
@@ -51,8 +51,8 @@ bool makeNumber(const std::string &a, const std::string &b, long double &result)
 
 //TODO: dokładność 0.001
 bool comparator(const contribution &first, const contribution &second) {
-    long double firstAmount = std::get<ammount>(first) * currencies[std::get<currency>(first)];
-    long double secondAmount = std::get<ammount>(second) * currencies[std::get<currency>(second)];
+    long double firstAmount = std::get<amount>(first) * currencies[std::get<currency>(first)];
+    long double secondAmount = std::get<amount>(second) * currencies[std::get<currency>(second)];
 
     if (firstAmount != secondAmount) {
         return firstAmount < secondAmount;
