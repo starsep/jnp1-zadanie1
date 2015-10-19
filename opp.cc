@@ -62,7 +62,7 @@ bool comparator(const contribution &first, const contribution &second) {
 }
 
 bool checkPhase1(const std::string &line) {
-    boost::regex pattern(R"(\s*(\u{3})\s+((\d+)(,(\d{1,3}))?)\s*)");
+    const static boost::regex pattern(R"(\s*(\u{3})\s+((\d+)(,(\d{1,3}))?)\s*)");
     bool matched = boost::regex_match(line, pattern);
     if (matched) {
         boost::smatch result;
@@ -73,6 +73,7 @@ bool checkPhase1(const std::string &line) {
             reportError(line);
             return false;
         }
+        //TODO: usunąć następną linijkę na koniec
         //std::cerr << currencyCode << " = " << currencyValue << '\n';
         if (currencyValue <= 0.0 || currencies.find(currencyCode) != currencies.end()) {
             reportError(line);
@@ -86,7 +87,7 @@ bool checkPhase1(const std::string &line) {
 }
 
 bool checkPhase2(const std::string &line) {
-    boost::regex pattern(R"(\s*(.*?)\s+((\d+)(,(\d{1,3}))?)\s(\u{3})\s*)");
+    const static boost::regex pattern(R"(\s*(.*?)\s+((\d+)(,(\d{1,3}))?)\s(\u{3})\s*)");
     bool matched = boost::regex_match(line, pattern);
     if (matched) {
         boost::smatch result;
@@ -98,7 +99,8 @@ bool checkPhase2(const std::string &line) {
             return false;
         }
         std::string currencyCode = result[6];
-        std::cerr << "PHASE2 " << "|" << name << "|" << ' ' << amount << ' ' << currencyCode << '\n';
+        //TODO: usunąć następną linijkę na koniec
+        //std::cerr << "PHASE2 " << "|" << name << "|" << ' ' << amount << ' ' << currencyCode << '\n';
         if (amount <= 0.0 || currencies.find(currencyCode) == currencies.end()) {
             reportError(line);
             return false;
@@ -109,6 +111,7 @@ bool checkPhase2(const std::string &line) {
     return matched;
 }
 
+//TODO: usunąć tę funkcję na koniec
 void printAll() {
     std::cout << "--- Print all --- \n";
     for (auto x : contributions) {
@@ -122,6 +125,7 @@ bool query(long double begin, long double end) {
         return false;
     }
 
+    //TODO: usunąć następną linijkę na koniec
     //printAll();
 	
     contribution lowerBound = std::make_tuple("", begin, "", 0);
@@ -142,7 +146,7 @@ bool query(long double begin, long double end) {
 }
 
 bool checkPhase3(const std::string &line) {
-    boost::regex pattern(R"(\s*(\d+)(,(\d{1,3}))?\s+(\d+)(,(\d{1,3}))?\s*)");
+    const static boost::regex pattern(R"(\s*(\d+)(,(\d{1,3}))?\s+(\d+)(,(\d{1,3}))?\s*)");
     bool matched = boost::regex_match(line, pattern);
     if (matched) {
         if (!isSorted) {
@@ -160,6 +164,7 @@ bool checkPhase3(const std::string &line) {
             reportError(line);
             return false;
         }
+        //TODO: usunąć następną linijkę na koniec
         //std::cerr << "BEGIN------------------------------ " << begin << ' ' << end << '\n';
     }
     return matched;
@@ -183,11 +188,12 @@ void solve() {
         if (!success) {
             reportError(line);
         }
+        //TODO: usunąć następną linijkę na koniec
         //std::cerr << line << "++++++++++" << currentPhase << '\n';
     }
 }
 
-
+//TODO: usunąć tę funkcję na koniec
 void check(const std::string &line, std::function<bool(const std::string &)> foo) {
     if (foo(line)) {
         std::cout << line << " is valid\n";
@@ -197,6 +203,7 @@ void check(const std::string &line, std::function<bool(const std::string &)> foo
     }
 }
 
+//TODO: usunąć tę funkcję na koniec
 void tests() {
     std::cout << "===First Phase:===\n\n";
     check("  PLN 11", checkPhase1);
@@ -241,11 +248,12 @@ void tests() {
     check("7 6", checkPhase3);
 }
 
-
+//TODO: usunąć tę funkcję na koniec
 void roundTest(double x) {
 	std::cout << "ROUND " << x << " " << nearbyint(x) << std::endl;
 }
 
+//TODO: usunąć tę funkcję na koniec
 void roundTests() {
 	roundTest(-5.5);
 	roundTest(-6.5);
@@ -257,6 +265,6 @@ void roundTests() {
 }
 
 int main() {
-	tests();
-    //solve();
+	//tests();
+    solve();
 }
