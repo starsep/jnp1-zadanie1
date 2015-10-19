@@ -1,4 +1,5 @@
 #include <boost/regex.hpp>
+#include <cctype>
 #include <iostream>
 #include <sstream>
 #include <algorithm>
@@ -10,6 +11,13 @@
 
 typedef std::tuple<std::string, long double, std::string, int> contribution;
 typedef std::vector<contribution>::iterator conIterator;
+
+enum {
+	name = 0,
+	ammount = 1,
+	currency = 2,
+	number = 3
+};
 
 bool isSorted = false;
 bool error = false;
@@ -43,18 +51,18 @@ bool makeNumber(const std::string &a, const std::string &b, long double &result)
 
 //TODO: dokładność 0.001
 bool comparator(const contribution &first, const contribution &second) {
-    long double firstAmount = std::get<1>(first) * currencies[std::get<2>(first)];
-    long double secondAmount = std::get<1>(second) * currencies[std::get<2>(second)];
+    long double firstAmount = std::get<ammount>(first) * currencies[std::get<currency>(first)];
+    long double secondAmount = std::get<ammount>(second) * currencies[std::get<currency>(second)];
 
     if (firstAmount != secondAmount) {
         return firstAmount < secondAmount;
     }
 
-    return std::get<3>(first) < std::get<3>(second); // sortowanie po numerze z wejścia
+    return std::get<number>(first) < std::get<number>(second); // sortowanie po numerze z wejścia
 }
 
 bool checkPhase1(const std::string &line) {
-    boost::regex pattern(R"(\s*(\u{3})\s((\d+)(,(\d{1,3}))?)\s*)");
+    boost::regex pattern(R"(\s*(\u{3})\s+((\d+)(,(\d{1,3}))?)\s*)");
     bool matched = boost::regex_match(line, pattern);
     if (matched) {
         boost::smatch result;
@@ -78,19 +86,22 @@ bool checkPhase1(const std::string &line) {
 }
 
 bool checkPhase2(const std::string &line) {
-    boost::regex pattern(R"(\s*(.*)\s((\d+)(,(\d{1,3}))?)\s(\u{3})\s*)");
+    boost::regex pattern(R"(\s*(.*)\s+((\d+)(,(\d{1,3}))?)\s(\u{3})\s*)");
     bool matched = boost::regex_match(line, pattern);
     if (matched) {
         boost::smatch result;
         boost::regex_search(line, result, pattern);
         std::string name = result[1];
+        /*while(isspace(name.back())) {
+			name.pop_back();
+		}*/
         long double amount;
         if (!makeNumber(result[3], result[5], amount)) {
             reportError(line);
             return false;
         }
         std::string currencyCode = result[6];
-        //std::cerr << "PHASE2 " << name << ' ' << amount << ' ' << currencyCode << '\n';
+        std::cerr << "PHASE2 " << "|" << name << "|" << ' ' << amount << ' ' << currencyCode << '\n';
         if (amount <= 0.0 || currencies.find(currencyCode) == currencies.end()) {
             reportError(line);
             return false;
@@ -115,7 +126,7 @@ bool query(long double begin, long double end) {
     }
 
     //printAll();
-
+	
     contribution lowerBound = std::make_tuple("", begin, "", 0);
     contribution upperBound = std::make_tuple("", end, "", currentLineNumber + 1);
 
@@ -134,7 +145,7 @@ bool query(long double begin, long double end) {
 }
 
 bool checkPhase3(const std::string &line) {
-    boost::regex pattern(R"(\s*(\d+)(,(\d{1,3}))?\s(\d+)(,(\d{1,3}))?\s*)");
+    boost::regex pattern(R"(\s*(\d+)(,(\d{1,3}))?\s+(\d+)(,(\d{1,3}))?\s*)");
     bool matched = boost::regex_match(line, pattern);
     if (matched) {
         if (!isSorted) {
@@ -179,7 +190,7 @@ void solve() {
     }
 }
 
-/*
+
 void check(const std::string &line, std::function<bool(const std::string &)> foo) {
     if (foo(line)) {
         std::cout << line << " is valid\n";
@@ -213,7 +224,7 @@ void tests() {
     check("EUR 5,11", checkPhase2);
     check("PHP 1,5", checkPhase2);
     check("XAU 0", checkPhase2);
-    check("Ala D 5,01 PLN", checkPhase2);
+    check("Ala D   5,01 PLN", checkPhase2);
     check("Ala  B 5 PLN", checkPhase2);
     check("Ala A 5,00 PLN", checkPhase2);
     check("Ala C 4,99 PLN", checkPhase2);
@@ -232,8 +243,23 @@ void tests() {
     check("1,504 1,504", checkPhase3);
     check("7 6", checkPhase3);
 }
-*/
+
+
+void roundTest(double x) {
+	std::cout << "ROUND " << x << " " << nearbyint(x) << std::endl;
+}
+
+void roundTests() {
+	roundTest(-5.5);
+	roundTest(-6.5);
+	roundTest(4.5);
+	roundTest(5.5);
+	roundTest(6.5);
+	roundTest(5.1);
+	roundTest(5.8);
+}
 
 int main() {
-    solve();
+	tests();
+    //solve();
 }
