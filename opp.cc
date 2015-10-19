@@ -264,6 +264,7 @@ void roundTests() {
 }
 
 int main() {
+    //TODO: usunąć następną linijkę na koniec
     //tests();
     solve();
 }
