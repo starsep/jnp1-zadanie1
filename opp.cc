@@ -13,10 +13,10 @@ typedef std::tuple<std::string, long double, std::string, int> contribution;
 typedef std::vector<contribution>::iterator conIterator;
 
 enum {
-	name = 0,
-	amount = 1,
-	currency = 2,
-	number = 3
+    name = 0,
+    amount = 1,
+    currency = 2,
+    number = 3
 };
 
 bool isSorted = false;
@@ -127,7 +127,7 @@ bool query(long double begin, long double end) {
 
     //TODO: usunąć następną linijkę na koniec
     //printAll();
-	
+
     contribution lowerBound = std::make_tuple("", begin, "", 0);
     contribution upperBound = std::make_tuple("", end, "", currentLineNumber + 1);
 
@@ -140,7 +140,6 @@ bool query(long double begin, long double end) {
         std::cout << ",\"" << std::get<1>(*it) << "\"";
         std::cout << "," << std::get<2>(*it) << "\n";
     }
-
 
     return true;
 }
@@ -173,7 +172,7 @@ bool checkPhase3(const std::string &line) {
 void solve() {
     currencies[""] = 1.0; // pusty string to uniwersalna waluta
     std::array<std::function<bool(const std::string &)>, 3> phases
-        {{checkPhase1, checkPhase2, checkPhase3}};
+            {{checkPhase1, checkPhase2, checkPhase3}};
     std::string line;
     size_t currentPhase = 0;
     for (currentLineNumber = 1; std::getline(std::cin, line); currentLineNumber++) {
@@ -250,21 +249,21 @@ void tests() {
 
 //TODO: usunąć tę funkcję na koniec
 void roundTest(double x) {
-	std::cout << "ROUND " << x << " " << nearbyint(x) << std::endl;
+    std::cout << "ROUND " << x << " " << nearbyint(x) << std::endl;
 }
 
 //TODO: usunąć tę funkcję na koniec
 void roundTests() {
-	roundTest(-5.5);
-	roundTest(-6.5);
-	roundTest(4.5);
-	roundTest(5.5);
-	roundTest(6.5);
-	roundTest(5.1);
-	roundTest(5.8);
+    roundTest(-5.5);
+    roundTest(-6.5);
+    roundTest(4.5);
+    roundTest(5.5);
+    roundTest(6.5);
+    roundTest(5.1);
+    roundTest(5.8);
 }
 
 int main() {
-	//tests();
+    //tests();
     solve();
 }
