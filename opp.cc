@@ -86,15 +86,12 @@ bool checkPhase1(const std::string &line) {
 }
 
 bool checkPhase2(const std::string &line) {
-    boost::regex pattern(R"(\s*(.*)\s+((\d+)(,(\d{1,3}))?)\s(\u{3})\s*)");
+    boost::regex pattern(R"(\s*(.*?)\s+((\d+)(,(\d{1,3}))?)\s(\u{3})\s*)");
     bool matched = boost::regex_match(line, pattern);
     if (matched) {
         boost::smatch result;
         boost::regex_search(line, result, pattern);
         std::string name = result[1];
-        /*while(isspace(name.back())) {
-			name.pop_back();
-		}*/
         long double amount;
         if (!makeNumber(result[3], result[5], amount)) {
             reportError(line);
