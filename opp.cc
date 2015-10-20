@@ -1,3 +1,4 @@
+//Filip Czaplicki, Bartosz Łukasiewicz 
 #include <boost/regex.hpp>
 #include <cctype>
 #include <iostream>
@@ -10,8 +11,12 @@
 #include <iomanip>
 #include <exception>
 
-typedef std::pair<long long, long long> numeralType; //liczba przed przecinkiem, liczba po przecinku
+//Wartość wpłaty przechowujemy jako parę (liczba przed przecinkiem, liczba po przecinku).
+typedef std::pair<long long, long long> numeralType;
+
+//Wpłatę przechowujemy jako czwórkę (nazwa, kwota, waluta, numer wpłaty).
 typedef std::tuple<std::string, numeralType, std::string, int> contribution;
+
 typedef std::vector<contribution>::iterator conIterator;
 
 enum {
@@ -28,7 +33,7 @@ const long long precision2 = precision * precision;
 bool isSorted = false;
 bool error = false;
 int currentLineNumber;
-std::map<std::string, numeralType> currencies; //dla kodu waluty przelicznik
+std::map<std::string, numeralType> currencies; //przelicznik dla kodu waluty
 std::vector <contribution> contributions;
 
 numeralType operator*(const numeralType &a, const numeralType &b) {
@@ -52,13 +57,10 @@ numeralType operator*(const numeralType &a, const numeralType &b) {
 	return result;
 }
 
-
 std::ostream& operator<<(std::ostream& os, const numeralType &num) {
     os << num.first << ',' << std::setfill('0') << std::setw(3) << num.second;
     return os;
 }
-
-
 
 void reportError(const std::string &line) {
     if (!error) {
@@ -67,21 +69,9 @@ void reportError(const std::string &line) {
     }
 }
 
-//ZAŁOŻENIE: zera wiodące to błąd
-//tworzy liczbę z części sprzed przecinka i po
-//np. makeNumber("3", "14") == 3.14
-//    makeNumber("42", "") == 42.0
+//ZAŁOŻENIE: zera wiodące to błąd, część po przecinku ma nie więcej niż 3 cyfry
+//tworzy liczbę z części przed przecinkiem i po
 bool makeNumber(const std::string &a, const std::string &b, numeralType &result) {
-    /*std::stringstream sstream;
-    sstream << a;
-    if (a[0] == '0' && a.size() > 1) {
-        return false;
-    }
-    if (b.size() > 0) {
-        sstream << '.' << b;
-    }
-    result = std::stold(sstream.str());
-    return true;*/
     std::string bWithZeroes = b;
     while(bWithZeroes.size() < 3) {
 		bWithZeroes += "0";
@@ -91,10 +81,10 @@ bool makeNumber(const std::string &a, const std::string &b, numeralType &result)
     }
     result.first = std::stoll(a);
     result.second = std::stoll(bWithZeroes);
+    
     return true;
 }
 
-//TODO: dokładność 0.001
 bool comparator(const contribution &first, const contribution &second) {
     numeralType firstAmount = std::get<amount>(first) * currencies[std::get<currency>(first)];
     numeralType secondAmount = std::get<amount>(second) * currencies[std::get<currency>(second)];
@@ -108,19 +98,22 @@ bool comparator(const contribution &first, const contribution &second) {
 
 bool checkPhase1(const std::string &line) {
     const static boost::regex pattern(R"(\s*(\u{3})\s+((\d+)(,(\d{1,3}))?)\s*)");
+
     bool matched = boost::regex_match(line, pattern);
     if (matched) {
         boost::smatch result;
         boost::regex_search(line, result, pattern);
         std::string currencyCode = result[1];
         numeralType currencyValue;
-        if (!makeNumber(result[3], result[5], currencyValue)) {
+        bool correctCurrencyValue = makeNumber(result[3], result[5], currencyValue);
+        if (!correctCurrencyValue || currencyValue == numeralType(0,0)) {
             reportError(line);
             return false;
         }
-        //TODO: usunąć następną linijkę na koniec
-        //std::cerr << currencyCode << " = " << currencyValue << '\n';
-        if (currencies.find(currencyCode) != currencies.end()) {
+
+        //jeśli znamy już tę walutę i ma ona inny kurs, to wypisujemy error
+        //zakładamy, że dwukrotny (ten sam) kurs tej samej waluty jest poprawny
+        if (currencies.find(currencyCode) != currencies.end() && currencies[currencyCode] != currencyValue) {
             reportError(line);
         }
         else if (!error) {
@@ -139,14 +132,9 @@ bool checkPhase2(const std::string &line) {
         boost::regex_search(line, result, pattern);
         std::string name = result[1];
         numeralType amount;
-        if (!makeNumber(result[3], result[5], amount)) {
-            reportError(line);
-            return false;
-        }
+        bool correctAmount = makeNumber(result[3], result[5], amount);
         std::string currencyCode = result[6];
-        //TODO: usunąć następną linijkę na koniec
-        //std::cerr << "PHASE2 " << "|" << name << "|" << ' ' << amount << ' ' << currencyCode << '\n';
-        if (currencies.find(currencyCode) == currencies.end()) {
+        if (!correctAmount || currencies.find(currencyCode) == currencies.end()) {
             reportError(line);
             return false;
         }
@@ -156,22 +144,10 @@ bool checkPhase2(const std::string &line) {
     return matched;
 }
 
-//TODO: usunąć tę funkcję na koniec
-void printAll() {
-    std::cout << "--- Print all --- \n";
-    for (auto x : contributions) {
-        std::cout << std::get<0>(x);// << " " << std::get<1>(x) << " " << std::get<2>(x) << " " << std::get<3>(x) << "\n";
-    }
-    std::cout << "--- Print all end ---" << "\n";
-}
-
 bool query(numeralType begin, numeralType end) {
     if (begin > end) {
         return false;
     }
-
-    //TODO: usunąć następną linijkę na koniec
-    //printAll();
 
     contribution lowerBound = std::make_tuple("", begin, "", 0);
     contribution upperBound = std::make_tuple("", end, "", currentLineNumber + 1);
@@ -200,16 +176,12 @@ bool checkPhase3(const std::string &line) {
         boost::smatch result;
         boost::regex_search(line, result, pattern);
         numeralType begin, end;
-        if (!makeNumber(result[1], result[3], begin) || !makeNumber(result[4], result[6], end)) {
+        bool correctBegin = makeNumber(result[1], result[3], begin);
+        bool correctEnd = makeNumber(result[4], result[6], end);
+        if (!correctBegin || !correctEnd || !query(begin, end)) {
             reportError(line);
             return false;
         }
-        if (!query(begin, end)) {
-            reportError(line);
-            return false;
-        }
-        //TODO: usunąć następną linijkę na koniec
-        //std::cerr << "BEGIN------------------------------ " << begin << ' ' << end << '\n';
     }
     return matched;
 }
@@ -232,84 +204,9 @@ void solve() {
         if (!success) {
             reportError(line);
         }
-        //TODO: usunąć następną linijkę na koniec
-        //std::cerr << line << "++++++++++" << currentPhase << '\n';
     }
-}
-
-//TODO: usunąć tę funkcję na koniec
-void check(const std::string &line, std::function<bool(const std::string &)> foo) {
-    if (foo(line)) {
-        std::cout << line << " is valid\n";
-    }
-    else {
-        std::cout << line << " is !!invalid\n";
-    }
-}
-
-//TODO: usunąć tę funkcję na koniec
-void tests() {
-    std::cout << "===First Phase:===\n\n";
-    check("  PLN 11", checkPhase1);
-    check("PLN  55", checkPhase1);
-    check("\t  PLN  66  \t ", checkPhase1);
-    check("\t  PLN 55  \t ", checkPhase1);
-    check("PLN 1", checkPhase1);
-    check("USD 3,96", checkPhase1);
-    check("EUR 4,19", checkPhase1);
-    check("EUR 5,11", checkPhase1);
-    check("PHP 1,5", checkPhase1);
-    check("XAU 0", checkPhase1);
-
-    std::cout << "\n===Second Phase:===\n\n";
-    check("  PLN 11", checkPhase2);
-    check("PLN  55", checkPhase2);
-    check("\t  PLN  66  \t ", checkPhase2);
-    check("\t  PLN 55  \t ", checkPhase2);
-    check("PLN 1", checkPhase2);
-    check("USD 3,96", checkPhase2);
-    check("EUR 4,19", checkPhase2);
-    check("EUR 5,11", checkPhase2);
-    check("PHP 1,5", checkPhase2);
-    check("XAU 0", checkPhase2);
-    check("Ala D   5,01 PLN", checkPhase2);
-    check("Ala  B 5 PLN", checkPhase2);
-    check("Ala A 5,00 PLN", checkPhase2);
-    check("Ala C 4,99 PLN", checkPhase2);
-    check("Baba 30 WWW", checkPhase2);
-    check("C         PLN", checkPhase2);
-    check("Miś 0,01 PLN", checkPhase2);
-    check("X 1,001 PHP", checkPhase2);
-    check("Y 1,003 PHP", checkPhase2);
-    check("1 PLN", checkPhase2);
-
-    std::cout << "\n===Third Phase:===\n\n";
-    check("5 5", checkPhase3);
-    check("0 10", checkPhase3);
-    check("0,001 0,002", checkPhase3);
-    check("1,502 1,502", checkPhase3);
-    check("1,504 1,504", checkPhase3);
-    check("7 6", checkPhase3);
-}
-
-//TODO: usunąć tę funkcję na koniec
-void roundTest(double x) {
-    std::cout << "ROUND " << x << " " << nearbyint(x) << std::endl;
-}
-
-//TODO: usunąć tę funkcję na koniec
-void roundTests() {
-    roundTest(-5.5);
-    roundTest(-6.5);
-    roundTest(4.5);
-    roundTest(5.5);
-    roundTest(6.5);
-    roundTest(5.1);
-    roundTest(5.8);
 }
 
 int main() {
-    //TODO: usunąć następną linijkę na koniec
-    //tests();
     solve();
 }
