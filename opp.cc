@@ -87,7 +87,7 @@ bool checkPhase1(const std::string &line) {
 }
 
 bool checkPhase2(const std::string &line) {
-    const static boost::regex pattern(R"(\s*(.*?)\s+((\d+)(,(\d{1,3}))?)\s(\u{3})\s*)");
+    const static boost::regex pattern(R"(\s*(.*?)\s+((\d+)(,(\d{1,3}))?)\s+(\u{3})\s*)");
     bool matched = boost::regex_match(line, pattern);
     if (matched) {
         boost::smatch result;
