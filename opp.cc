@@ -2,6 +2,7 @@
 #include <cctype>
 #include <iostream>
 #include <sstream>
+#include <ostream>
 #include <algorithm>
 #include <vector>
 #include <map>
@@ -9,7 +10,8 @@
 #include <iomanip>
 #include <exception>
 
-typedef std::tuple<std::string, long double, std::string, int> contribution;
+typedef std::pair<long long, long long> numeralType; //liczba przed przecinkiem, liczba po przecinku
+typedef std::tuple<std::string, numeralType, std::string, int> contribution;
 typedef std::vector<contribution>::iterator conIterator;
 
 enum {
@@ -19,11 +21,44 @@ enum {
     number = 3
 };
 
+const long long ten = 10;
+const long long precision = 1000;
+const long long precision2 = precision * precision;
+
 bool isSorted = false;
 bool error = false;
 int currentLineNumber;
-std::map<std::string, long double> currencies; //dla kodu waluty przelicznik
+std::map<std::string, numeralType> currencies; //dla kodu waluty przelicznik
 std::vector <contribution> contributions;
+
+numeralType operator*(const numeralType &a, const numeralType &b) {
+	numeralType result;
+	
+	long long valueA = precision * a.first + a.second;
+	long long valueB = precision * b.first + b.second;
+	
+	long long product = valueA * valueB;
+	result.first = product / precision2;
+	
+	long long remainder = product % precision2;
+	result.second = remainder / precision;
+	
+	long long significantDigit = remainder / (precision / ten) % ten;
+	
+	if ((significantDigit == 5 && result.second % 2 == 1) || (significantDigit > 5)) {
+		result.second++;
+	}
+
+	return result;
+}
+
+
+std::ostream& operator<<(std::ostream& os, const numeralType &num) {
+    os << num.first << ',' << std::setfill('0') << std::setw(3) << num.second;
+    return os;
+}
+
+
 
 void reportError(const std::string &line) {
     if (!error) {
@@ -36,8 +71,8 @@ void reportError(const std::string &line) {
 //tworzy liczbę z części sprzed przecinka i po
 //np. makeNumber("3", "14") == 3.14
 //    makeNumber("42", "") == 42.0
-bool makeNumber(const std::string &a, const std::string &b, long double &result) {
-    std::stringstream sstream;
+bool makeNumber(const std::string &a, const std::string &b, numeralType &result) {
+    /*std::stringstream sstream;
     sstream << a;
     if (a[0] == '0' && a.size() > 1) {
         return false;
@@ -46,13 +81,23 @@ bool makeNumber(const std::string &a, const std::string &b, long double &result)
         sstream << '.' << b;
     }
     result = std::stold(sstream.str());
+    return true;*/
+    std::string bWithZeroes = b;
+    while(bWithZeroes.size() < 3) {
+		bWithZeroes += "0";
+	}
+    if (a[0] == '0' && a.size() > 1) {
+        return false;
+    }
+    result.first = std::stoll(a);
+    result.second = std::stoll(bWithZeroes);
     return true;
 }
 
 //TODO: dokładność 0.001
 bool comparator(const contribution &first, const contribution &second) {
-    long double firstAmount = std::get<amount>(first) * currencies[std::get<currency>(first)];
-    long double secondAmount = std::get<amount>(second) * currencies[std::get<currency>(second)];
+    numeralType firstAmount = std::get<amount>(first) * currencies[std::get<currency>(first)];
+    numeralType secondAmount = std::get<amount>(second) * currencies[std::get<currency>(second)];
 
     if (firstAmount != secondAmount) {
         return firstAmount < secondAmount;
@@ -68,14 +113,14 @@ bool checkPhase1(const std::string &line) {
         boost::smatch result;
         boost::regex_search(line, result, pattern);
         std::string currencyCode = result[1];
-        long double currencyValue;
+        numeralType currencyValue;
         if (!makeNumber(result[3], result[5], currencyValue)) {
             reportError(line);
             return false;
         }
         //TODO: usunąć następną linijkę na koniec
         //std::cerr << currencyCode << " = " << currencyValue << '\n';
-        if (currencyValue <= 0.0 || currencies.find(currencyCode) != currencies.end()) {
+        if (currencies.find(currencyCode) != currencies.end()) {
             reportError(line);
         }
         else if (!error) {
@@ -93,7 +138,7 @@ bool checkPhase2(const std::string &line) {
         boost::smatch result;
         boost::regex_search(line, result, pattern);
         std::string name = result[1];
-        long double amount;
+        numeralType amount;
         if (!makeNumber(result[3], result[5], amount)) {
             reportError(line);
             return false;
@@ -101,7 +146,7 @@ bool checkPhase2(const std::string &line) {
         std::string currencyCode = result[6];
         //TODO: usunąć następną linijkę na koniec
         //std::cerr << "PHASE2 " << "|" << name << "|" << ' ' << amount << ' ' << currencyCode << '\n';
-        if (amount <= 0.0 || currencies.find(currencyCode) == currencies.end()) {
+        if (currencies.find(currencyCode) == currencies.end()) {
             reportError(line);
             return false;
         }
@@ -115,12 +160,12 @@ bool checkPhase2(const std::string &line) {
 void printAll() {
     std::cout << "--- Print all --- \n";
     for (auto x : contributions) {
-        std::cout << std::get<0>(x) << " " << std::get<1>(x) << " " << std::get<2>(x) << " " << std::get<3>(x) << "\n";
+        std::cout << std::get<0>(x);// << " " << std::get<1>(x) << " " << std::get<2>(x) << " " << std::get<3>(x) << "\n";
     }
     std::cout << "--- Print all end ---" << "\n";
 }
 
-bool query(long double begin, long double end) {
+bool query(numeralType begin, numeralType end) {
     if (begin > end) {
         return false;
     }
@@ -154,7 +199,7 @@ bool checkPhase3(const std::string &line) {
         }
         boost::smatch result;
         boost::regex_search(line, result, pattern);
-        long double begin, end;
+        numeralType begin, end;
         if (!makeNumber(result[1], result[3], begin) || !makeNumber(result[4], result[6], end)) {
             reportError(line);
             return false;
@@ -170,7 +215,7 @@ bool checkPhase3(const std::string &line) {
 }
 
 void solve() {
-    currencies[""] = 1.0; // pusty string to uniwersalna waluta
+    currencies[""] = numeralType(1, 0); // pusty string to uniwersalna waluta
     std::array<std::function<bool(const std::string &)>, 3> phases
             {{checkPhase1, checkPhase2, checkPhase3}};
     std::string line;
