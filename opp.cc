@@ -33,31 +33,31 @@ const long long precision2 = precision * precision;
 bool isSorted = false;
 bool error = false;
 int currentLineNumber;
-std::map<std::string, numeralType> currencies; //przelicznik dla kodu waluty
+std::map <std::string, numeralType> currencies; //przelicznik dla kodu waluty
 std::vector <contribution> contributions;
 
 numeralType operator*(const numeralType &a, const numeralType &b) {
-	numeralType result;
-	
-	long long valueA = precision * a.first + a.second;
-	long long valueB = precision * b.first + b.second;
-	
-	long long product = valueA * valueB;
-	result.first = product / precision2;
-	
-	long long remainder = product % precision2;
-	result.second = remainder / precision;
-	
-	long long significantDigit = remainder / (precision / ten) % ten;
-	
-	if ((significantDigit == 5 && result.second % 2 == 1) || (significantDigit > 5)) {
-		result.second++;
-	}
+    numeralType result;
 
-	return result;
+    long long valueA = precision * a.first + a.second;
+    long long valueB = precision * b.first + b.second;
+
+    long long product = valueA * valueB;
+    result.first = product / precision2;
+
+    long long remainder = product % precision2;
+    result.second = remainder / precision;
+
+    long long significantDigit = remainder / (precision / ten) % ten;
+
+    if ((significantDigit == 5 && result.second % 2 == 1) || (significantDigit > 5)) {
+        result.second++;
+    }
+
+    return result;
 }
 
-std::ostream& operator<<(std::ostream& os, const numeralType &num) {
+std::ostream &operator<<(std::ostream &os, const numeralType &num) {
     os << num.first << ',' << std::setfill('0') << std::setw(3) << num.second;
     return os;
 }
@@ -73,15 +73,15 @@ void reportError(const std::string &line) {
 //tworzy liczbę z części przed przecinkiem i po
 bool makeNumber(const std::string &a, const std::string &b, numeralType &result) {
     std::string bWithZeroes = b;
-    while(bWithZeroes.size() < 3) {
-		bWithZeroes += "0";
-	}
+    while (bWithZeroes.size() < 3) {
+        bWithZeroes += "0";
+    }
     if (a[0] == '0' && a.size() > 1) {
         return false;
     }
     result.first = std::stoll(a);
     result.second = std::stoll(bWithZeroes);
-    
+
     return true;
 }
 
@@ -106,7 +106,7 @@ bool checkPhase1(const std::string &line) {
         std::string currencyCode = result[1];
         numeralType currencyValue;
         bool correctCurrencyValue = makeNumber(result[3], result[5], currencyValue);
-        if (!correctCurrencyValue || currencyValue == numeralType(0,0)) {
+        if (!correctCurrencyValue || currencyValue == numeralType(0, 0)) {
             reportError(line);
             return false;
         }
