@@ -136,9 +136,9 @@ bool query(long double begin, long double end) {
 
     for (conIterator it = lower; it != upper; it++) {
         std::cout << std::fixed << std::setprecision(3);
-        std::cout << "\"" << std::get<0>(*it) << "\"";
-        std::cout << ",\"" << std::get<1>(*it) << "\"";
-        std::cout << "," << std::get<2>(*it) << "\n";
+        std::cout << "\"" << std::get<name>(*it) << "\"";
+        std::cout << ",\"" << std::get<amount>(*it) << "\"";
+        std::cout << "," << std::get<currency>(*it) << "\n";
     }
 
     return true;
