@@ -103,7 +103,13 @@ bool comparator(const contribution &first, const contribution &second) {
 bool checkPhase1(const std::string &line) {
     const static boost::regex pattern(R"(\s*(\u{3})\s+((\d+)(,(\d{1,3}))?)\s*)");
     boost::smatch result;
-    bool matched = boost::regex_search(line, result, pattern);
+    bool matched = false;
+    try {
+        matched = boost::regex_search(line, result, pattern);
+    }
+    catch(...) {
+        return false;
+    }
     if (matched) {
         std::string currencyCode = result[1];
         numeralType currencyValue;
@@ -129,7 +135,13 @@ bool checkPhase1(const std::string &line) {
 bool checkPhase2(const std::string &line) {
     const static boost::regex pattern(R"(\s*(.*?)\s+((\d+)(,(\d{1,3}))?)\s+(\u{3})\s*)");
     boost::smatch result;
-    bool matched = boost::regex_search(line, result, pattern);
+    bool matched = false;
+    try {
+        matched = boost::regex_search(line, result, pattern);
+    }
+    catch(...) {
+        return false;
+    }
     if (matched) {
         std::string name = result[1];
         numeralType amount;
@@ -169,7 +181,13 @@ bool query(numeralType begin, numeralType end) {
 bool checkPhase3(const std::string &line) {
     const static boost::regex pattern(R"(\s*(\d+)(,(\d{1,3}))?\s+(\d+)(,(\d{1,3}))?\s*)");
     boost::smatch result;
-    bool matched = boost::regex_search(line, result, pattern);;
+    bool matched = false;
+    try {
+        matched = boost::regex_search(line, result, pattern);
+    }
+    catch(...) {
+        return false;
+    }
     if (matched) {
         if (!isSorted) {
             std::sort(contributions.begin(), contributions.end(), comparator);
