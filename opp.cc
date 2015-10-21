@@ -79,9 +79,13 @@ bool makeNumber(const std::string &a, const std::string &b, numeralType &result)
     if (a[0] == '0' && a.size() > 1) {
         return false;
     }
-    result.first = std::stoll(a);
-    result.second = std::stoll(bWithZeroes);
-
+    try {
+        result.first = std::stoll(a);
+        result.second = std::stoll(bWithZeroes);
+    }
+    catch(...) {
+        return false;
+    }
     return true;
 }
 
